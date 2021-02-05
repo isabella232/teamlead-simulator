@@ -1,0 +1,23 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "target": "es6",
+    "rootDir": "src",
+    "outDir": "../dist",
+    "alwaysStrict": true,
+    "strict": true,
+    "sourceMap": true,
+    "plugins": [
+      {
+        "transform": "../codegen/src/meta.ts"
+      }
+    ],
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  },
+  "include": [
+    "**/*.ts"
+  ]
+}
