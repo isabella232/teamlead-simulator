@@ -3,4 +3,4 @@ COPY . /app
 WORKDIR /app
 EXPOSE 3333
 RUN node ci
-CMD ["node", "serve"]
+ENTRYPOINT ["node", "serve"]
