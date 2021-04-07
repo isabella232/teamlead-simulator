@@ -1,3 +1,8 @@
+import en from "./messages/en.properties";
+import ru from "./messages/ru.properties";
+
+let i18n = ru;
+
 type XY = { x: number, y: number }
 
 type Mouse_State = {
@@ -9,7 +14,7 @@ type Mouse_State = {
     scroll_y: number
 }
 
-declare const enum Button_State {
+const enum Button_State {
     default = 0,
     hovered = 1,
     clicked = 2
@@ -221,6 +226,7 @@ type By_Status<Union, Status> = Union extends { status: Status } ? Union : never
 
 enum Overlay_Type {
     none,
+    lang,
     intro,
     standup_report,
     code_review,
@@ -240,8 +246,9 @@ enum Overlay_Type {
 type Overlay = {
     type: Overlay_Type.none
 } | {
+    type: Overlay_Type.lang
+} | {
     type: Overlay_Type.intro
-    // Can add difficulty selection here
 } | {
     type: Overlay_Type.standup_report
     queue: Array<Teammate | undefined>
@@ -372,7 +379,10 @@ const debug_buttons = false;
 
 const image_cache: Map<string, Image_Resource> = new Map();
 
-declare function embed_base64(from_path: string): string;
+function embed_base64(from_path: string): string {
+    return from_path;
+}
+
 declare function unreachable(x: never): never;
 
 function xy(x: number, y: number): XY {
@@ -736,28 +746,28 @@ function base64_image(base64: string) {
 }
 
 const images = {
-    logo_pear: base64_image(embed_base64("images/pear.png")),
-    icon_app_code_junkie: base64_image(embed_base64("images/code_junkie.png")),
-    icon_app_limp: base64_image(embed_base64("images/limp.png")),
-    icon_app_wrike: base64_image(embed_base64("images/wrike.png")),
-    icon_app_clndr: base64_image(embed_base64("images/clndr.png")),
-    icon_app_iron: base64_image(embed_base64("images/iron.png")),
-    icon_web_you_cube: base64_image(embed_base64("images/you_cube.png")),
-    icon_web_jabr: base64_image(embed_base64("images/jabr.png")),
-    background_day: base64_image(embed_base64("images/mojave-day.jpg")),
-    background_night: base64_image(embed_base64("images/mojave-night.jpg")),
-    logo_wrike: base64_image(embed_base64("images/wrike_full.png")),
-    logo_iron_big: base64_image(embed_base64("images/iron_big_logo.png")),
-    default_avatar: base64_image(embed_base64("images/default_avatar.png")),
+    logo_pear: image_from_url(embed_base64("images/pear.png")),
+    icon_app_code_junkie: image_from_url(embed_base64("images/code_junkie.png")),
+    icon_app_limp: image_from_url(embed_base64("images/limp.png")),
+    icon_app_wrike: image_from_url(embed_base64("images/wrike.png")),
+    icon_app_clndr: image_from_url(embed_base64("images/clndr.png")),
+    icon_app_iron: image_from_url(embed_base64("images/iron.png")),
+    icon_web_you_cube: image_from_url(embed_base64("images/you_cube.png")),
+    icon_web_jabr: image_from_url(embed_base64("images/jabr.png")),
+    background_day: image_from_url(embed_base64("images/mojave-day.jpg")),
+    background_night: image_from_url(embed_base64("images/mojave-night.jpg")),
+    logo_wrike: image_from_url(embed_base64("images/wrike_full.png")),
+    logo_iron_big: image_from_url(embed_base64("images/iron_big_logo.png")),
+    default_avatar: image_from_url(embed_base64("images/default_avatar.png")),
     people: [
-        base64_image(embed_base64("images/people/1.jpg")),
-        base64_image(embed_base64("images/people/2.jpg")),
-        base64_image(embed_base64("images/people/3.jpg")),
-        base64_image(embed_base64("images/people/4.jpg")),
-        base64_image(embed_base64("images/people/5.jpg")),
-        base64_image(embed_base64("images/people/6.jpg")),
-        base64_image(embed_base64("images/people/7.jpg")),
-        base64_image(embed_base64("images/people/8.jpg"))
+        image_from_url(embed_base64("images/people/1.jpg")),
+        image_from_url(embed_base64("images/people/2.jpg")),
+        image_from_url(embed_base64("images/people/3.jpg")),
+        image_from_url(embed_base64("images/people/4.jpg")),
+        image_from_url(embed_base64("images/people/5.jpg")),
+        image_from_url(embed_base64("images/people/6.jpg")),
+        image_from_url(embed_base64("images/people/7.jpg")),
+        image_from_url(embed_base64("images/people/8.jpg"))
     ]
 };
 
@@ -2467,13 +2477,33 @@ function draw_overlay_screen() {
             break;
         }
 
+        case Overlay_Type.lang: {
+            const menu = big_centered_menu();
+            menu.center_text();
+            menu.message("Language");
+
+            for (const [name, language] of [["English", en], ["Russian", ru]]) {
+                if (menu.button(name)) {
+                    i18n = language;
+                    show_overlay({ type: Overlay_Type.intro });
+                }
+            }
+
+            menu.finish();
+
+            block_exit();
+
+
+            break;
+        }
+
         case Overlay_Type.intro: {
             const menu = big_centered_menu();
             menu.center_text();
 
             const team = game.team.map(teammate => `${teammate.name} - специалист в ${teammate.skills.map(skill_name).join(", ")}`).join("\n");
 
-            menu.message(`Вы - тимлид\nВаша команда:\n${team}`);
+            menu.message(i18n.overlay.intro.header({ team }))
 
             for (const difficulty of [
                 [Difficulty.junior, 0.3] as const,
@@ -2483,7 +2513,7 @@ function draw_overlay_screen() {
             ]) {
                 const [kind, multiplier] = difficulty;
 
-                if (menu.button(`Сложность: ${difficulty_name(difficulty[0])}`)) {
+                if (menu.button(i18n.overlay.intro.difficulty({ difficulty: difficulty_name(difficulty[0]) }))) {
                     game.backlog = generate_backlog(game.team.length + 1, game.deadline_day, multiplier * 0.5);
                     game.difficulty = kind;
 
@@ -4205,7 +4235,7 @@ function start_game() {
 
         backlog: [],
         overlay: {
-            type: Overlay_Type.intro
+            type: Overlay_Type.lang
         },
         team: generate_team(),
         today_events: [],
@@ -4255,3 +4285,5 @@ function start_game() {
 
     start_animation_frame_loop(0);
 }
+
+start_game();

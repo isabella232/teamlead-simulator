@@ -7,6 +7,9 @@
     "alwaysStrict": true,
     "strict": true,
     "sourceMap": true,
+    "isolatedModules": true,
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
     "plugins": [
       {
         "transform": "../codegen/src/meta.ts"

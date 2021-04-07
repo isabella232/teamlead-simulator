@@ -1,14 +1,19 @@
-const cmd = `npx tsc-watch -b ../main/tsconfig.json --incremental --compiler ttypescript/bin/tsc --onCompilationComplete "node ../on-compile.js"`;
-const process = require("child_process").exec(cmd, { cwd: "codegen" })
+const esbuild = require('esbuild');
 
-process.stdout.on('data', function (data) {
-    console.log(data.toString());
-});
+esbuild.build({
+    ...require("./build-options").options,
+    watch: {
+        onRebuild(error, result) {
+            if (error) console.error('watch build failed:', error)
+            else console.log('watch build succeeded:', result)
+        },
+    },
+}).then(result => {
+    console.log("Build ok");
 
-process.stderr.on('data', function (data) {
-    console.log(data.toString());
-});
+    const messages = esbuild.formatMessagesSync(result.warnings, { kind: "warning" });
 
-process.on('exit', function (code) {
-    console.log('Exit with code ' + code.toString());
-});
+    for (const message of messages) {
+        console.log(message);
+    }
+})

@@ -1,1 +1,0 @@
-require("fs").copyFileSync("../main/src/game.html", "../dist/game.html");

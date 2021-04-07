@@ -1,0 +1,16 @@
+{
+  "name": "teamlead",
+  "version": "1.0.0",
+  "description": "",
+  "devDependencies": {
+    "serve-handler": "^6.1.3",
+    "@messageformat/core": "^3.0.0-beta.3",
+    "dot-properties": "^1.0.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@messageformat/runtime": "^3.0.0-beta.2",
+    "esbuild": "^0.11.6"
+  }
+}
