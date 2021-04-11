@@ -1,5 +1,5 @@
-import en from "./messages/en.properties";
-import ru from "./messages/ru.properties";
+import en from "en.properties";
+import ru from "ru.properties";
 
 let i18n = ru;
 
@@ -107,10 +107,14 @@ type Player = {
     attended_meetings_today: Calendar_Event_Type[]
 }
 
+type Given_Name = {
+    nominative: string
+    genitive: string
+    dative: string
+}
+
 type Teammate = {
-    name: string
-    name_genitive: string
-    name_dative: string
+    name: Given_Name
     skill_level: number
     avatar: Image_Resource
     messages: Message[]
@@ -409,26 +413,6 @@ function image_from_url(url: string): Image_Resource {
     return new_resource;
 }
 
-function pluralize_ru(x: number, one: string, two: string, five: string) {
-    x = Math.floor(Math.abs(x)) % 100;
-
-    if (x > 10 && x < 20) {
-        return five;
-    }
-
-    x = x % 10;
-
-    if (x == 1) {
-        return one;
-    }
-
-    if (x >= 2 && x <= 4) {
-        return two;
-    }
-
-    return five;
-}
-
 function contains(x: number, y: number, sx: number, sy: number, width: number, height: number) {
     return x >= sx && y >= sy && x < sx + width && y < sy + height;
 }
@@ -718,17 +702,17 @@ function receive_message_from(teammate: Teammate, text: string, skip_greeting = 
 
     if (!any_messages_today && !skip_greeting) {
         const greetings = [
-            "Привет",
-            "Прив",
-            "Хай",
-            "Даров",
-            "Здоровеньки булы"
+            i18n.chat.greetings.v1(),
+            i18n.chat.greetings.v2(),
+            i18n.chat.greetings.v3(),
+            i18n.chat.greetings.v4(),
+            i18n.chat.greetings.v5()
         ];
 
         teammate.messages.push({
             received_at_day: game.day,
             received_at_hour: game.hour_of_day,
-            text: random_in_array(greetings) + random_in_array(["", "!"]),
+            text: random_in_array(greetings) + random_in_array(["", "!"]), // @LangConcat
             received_at_day_of_week: game.day_of_week
         });
     }
@@ -798,10 +782,10 @@ type Token = {
 
 function difficulty_name(difficulty: Difficulty): string {
     switch (difficulty) {
-        case Difficulty.junior: return "Джуниор";
-        case Difficulty.middle: return "Мидл";
-        case Difficulty.senior: return "Сеньор";
-        case Difficulty.teamlead: return "Тимлид";
+        case Difficulty.junior: return i18n.difficulty.junior();
+        case Difficulty.middle: return i18n.difficulty.middle();
+        case Difficulty.senior: return i18n.difficulty.senior();
+        case Difficulty.teamlead: return i18n.difficulty.teamlead();
     }
 }
 
@@ -1198,7 +1182,7 @@ function draw_messenger(app: By_Type<App, App_Type.limp>, width: number, height:
             ctx.fillStyle = selected ? unread_chat_name : offline_chat_color;
         }
 
-        ctx.fillText(teammate.name, padding + status_bubble_r * 2 + 7, center_y);
+        ctx.fillText(teammate.name.nominative, padding + status_bubble_r * 2 + 7, center_y);
 
         if (state == Button_State.clicked) {
             mark_current_chat_as_read(app);
@@ -1249,9 +1233,9 @@ function draw_messenger(app: By_Type<App, App_Type.limp>, width: number, height:
 
             ctx.fillStyle = online ? "#000" : offline_chat_top;
 
-            const name_width = ctx.measureText(app.current_chat.name).width;
+            const name_width = ctx.measureText(app.current_chat.name.nominative).width;
             const name_x = x + status_bubble_r * 2 + 4;
-            ctx.fillText(app.current_chat.name, name_x, y);
+            ctx.fillText(app.current_chat.name.nominative, name_x, y);
 
             const title_x = name_x + name_width + 12;
             push_font(15);
@@ -1305,10 +1289,10 @@ function draw_messenger(app: By_Type<App, App_Type.limp>, width: number, height:
                 // Name
                 push_font(15, "bold");
 
-                const name_width = ctx.measureText(app.current_chat.name).width;
+                const name_width = ctx.measureText(app.current_chat.name.nominative).width;
 
                 ctx.fillStyle = text_color;
-                ctx.fillText(app.current_chat.name, lines_x, message_top_y);
+                ctx.fillText(app.current_chat.name.nominative, lines_x, message_top_y);
 
                 pop_font();
 
@@ -1358,7 +1342,7 @@ function draw_messenger(app: By_Type<App, App_Type.limp>, width: number, height:
             push_font(15);
 
             ctx.fillStyle = placeholder_text_color;
-            ctx.fillText(`Написать ${app.current_chat.name_dative}`, top_left_x + 12, top_left_y + message_input_height / 2);
+            ctx.fillText(i18n.chat.action.message_teammate({ name: app.current_chat.name }), top_left_x + 12, top_left_y + message_input_height / 2);
 
             pop_font();
 
@@ -1656,15 +1640,15 @@ function draw_wrike(app: By_Type<App, App_Type.wrike>, width: number, height: nu
     function task_to_assignee(task: Task): { name: string, avatar?: Image_Resource } | undefined {
         if (task.status == Task_Status.in_development) {
             if (task.assigned_to.you) {
-                return { name: "Вы" };
+                return { name: i18n.assigned_to_you() };
             } else {
-                return { name: task.assigned_to.teammate.name, avatar: task.assigned_to.teammate.avatar };
+                return { name: task.assigned_to.teammate.name.nominative, avatar: task.assigned_to.teammate.avatar };
             }
         } else if (task.status == Task_Status.in_review) {
             if (task.assigned_to.you) {
 
             } else {
-                return { name: "Вы" }
+                return { name: i18n.assigned_to_you() }
             }
         } else if (task.status == Task_Status.in_testing) {
             return { name: "QA Team" };
@@ -2009,7 +1993,7 @@ function draw_top_bar(width: number) {
         if (game.day == 0 && game.hour_of_day >= work_end_hour && game.overlay.type != Overlay_Type.computer_menu) {
             ctx.fillStyle = "#fff";
 
-            const tip_text = "Завершить работу на сегодня можно здесь";
+            const tip_text = i18n.top_bar.finish_work_tip();
 
             const tip_x = (Math.sin(game.time / 250) + 1) * 15 + name_x + name_width + 32;
             const tip_y = 4;
@@ -2054,7 +2038,7 @@ function draw_top_bar(width: number) {
         ctx.fillText(time_text, width - padding_side - time_width, height / 2);
         pop_font();
 
-        const day_text = `Сентябрь ${game.day + 1}, ${day_of_week_name(game.day_of_week)}`;
+        const day_text = i18n.top_bar.today({ day: game.day + 1, day_of_week: day_of_week_name(game.day_of_week) });
 
         push_font(14);
         const day_width = ctx.measureText(day_text).width;
@@ -2155,7 +2139,7 @@ function hour_string(hour: number) {
 function draw_calendar(width: number) {
     function calendar_event_name(event: Calendar_Event): string {
         switch (event.type) {
-            case Calendar_Event_Type.one_on_one: return `One on One - ${event.teammate.name}`;
+            case Calendar_Event_Type.one_on_one: return `One on One - ${event.teammate.name.nominative}`;
             case Calendar_Event_Type.lead_meeting: return "Team Lead Sync";
             case Calendar_Event_Type.candidate_interview: return `Interview - ${event.candidate_name}`;
             case Calendar_Event_Type.daily_standup: return "Daily Standup";
@@ -2429,26 +2413,18 @@ function draw_overlay_screen() {
     }
 
     function deadline_stats_message(show_total_tasks: boolean) {
-        function days(x: number) {
-            return pluralize_ru(x, "день", "дня", "дней");
-        }
-
-        function remaining(x: number) {
-            return pluralize_ru(x, "Осталась", "Остались", "Осталось");
-        }
-
-        function tasks(x: number) {
-            return pluralize_ru(x, "задача", "задачи", "задач");
-        }
-
         const days_until = game.deadline_day - game.day;
         const not_done = tasks_not_done();
         const total = game.backlog.length;
 
+        const text_days_until = i18n.deadline_stats.days_until({ days: days_until });
+
         if (show_total_tasks) {
-            return `До дедлайна ${days_until} ${days(days_until)}\n${remaining(not_done)} ${not_done} ${tasks(not_done)} (из ${total})`;
+            const text_tasks_remaining = i18n.deadline_stats.tasks_remaining({ tasks: not_done, total: total });
+            return `${text_days_until}\n${text_tasks_remaining}`;
         } else {
-            return `До дедлайна ${days_until} ${days(days_until)}\nВ беклоге ${not_done} ${tasks(not_done)}`;
+            const text_tasks_remaining = i18n.deadline_stats.backlog({ tasks: not_done });
+            return `${text_days_until}\n${text_tasks_remaining}`;
         }
     }
 
@@ -2482,7 +2458,7 @@ function draw_overlay_screen() {
             menu.center_text();
             menu.message("Language");
 
-            for (const [name, language] of [["English", en], ["Russian", ru]]) {
+            for (const [name, language] of [["English", en], ["Russian", ru]] as const) {
                 if (menu.button(name)) {
                     i18n = language;
                     show_overlay({ type: Overlay_Type.intro });
@@ -2493,7 +2469,6 @@ function draw_overlay_screen() {
 
             block_exit();
 
-
             break;
         }
 
@@ -2501,7 +2476,7 @@ function draw_overlay_screen() {
             const menu = big_centered_menu();
             menu.center_text();
 
-            const team = game.team.map(teammate => `${teammate.name} - специалист в ${teammate.skills.map(skill_name).join(", ")}`).join("\n");
+            const team = game.team.map(teammate => i18n.overlay.intro.teammate({ name: teammate.name, skills: teammate.skills.map(skill_name).join(", ") })).join("\n");
 
             menu.message(i18n.overlay.intro.header({ team }))
 
@@ -2536,9 +2511,9 @@ function draw_overlay_screen() {
             const menu = big_centered_menu();
             menu.center_text();
 
-            menu.message(`${day_of_week_starts(game.day_of_week)}. Сегодня у Вас заслуженный выходной. Вы можете продолжить работать, но достоверно известно, что в выходные нужно отдыхать.`);
+            menu.message(i18n.overlay.weekend.message({ day_started: day_of_week_starts(game.day_of_week) }));
 
-            if (menu.button("Отдыхать до понедельника")) {
+            if (menu.button(i18n.overlay.weekend.action.rest())) {
                 do {
                     skip_hours(1);
                     increase_health(4);
@@ -2547,7 +2522,7 @@ function draw_overlay_screen() {
                 new_day_message();
             }
 
-            if (menu.button("Заняться чем-то еще")) {
+            if (menu.button(i18n.overlay.weekend.action.do_something_else())) {
                 exit_overlay();
             }
 
@@ -2565,32 +2540,30 @@ function draw_overlay_screen() {
 
             if (overlay.event.start_hour == game.hour_of_day) {
                 if (overlay.event.type == Calendar_Event_Type.lunch) {
-                    if (menu.button("Идти на обед (1 ч.)")) {
+                    if (menu.button(i18n.overlay.calendar.action.lunch())) {
                         const food = [
-                            "макарошки с курицей",
-                            "пюрешку с гуляшем",
-                            "супчик",
-                            "котлетки",
-                            "салатик",
-                            "рыбку",
-                            "кусочек пиццы"
+                            i18n.overlay.calendar.lunch.food.v1(),
+                            i18n.overlay.calendar.lunch.food.v2(),
+                            i18n.overlay.calendar.lunch.food.v3(),
+                            i18n.overlay.calendar.lunch.food.v4(),
+                            i18n.overlay.calendar.lunch.food.v5(),
+                            i18n.overlay.calendar.lunch.food.v6(),
+                            i18n.overlay.calendar.lunch.food.v7()
                         ];
-
-                        const random_food = food[Math.floor(Math.random() * food.length)];
 
                         game.player.attended_meetings_today.push(overlay.event.type);
 
                         skip_hours(1);
                         increase_health(10);
 
-                        message_overlay(`Сегодня в местной столовой как всегда людно. Отстояв в очереди, Вы купили ${random_food} и с удовольствием пообедали. [+Здоровье]`);
+                        message_overlay(i18n.overlay.calendar.lunch.message({ food: random_in_array(food) }));
                     }
                 }
 
                 if (overlay.event.type == Calendar_Event_Type.daily_standup) {
-                    menu.message("На ежедневном стендапе все члены команды делятся краткой информацией о проделанной за предыдущий день работе и текущих блокерах");
+                    menu.message(i18n.overlay.calendar.standup.info());
 
-                    if (menu.button("Подключиться к стендапу (1 ч.)")) {
+                    if (menu.button(i18n.overlay.calendar.action.standup())) {
                         game.player.attended_meetings_today.push(overlay.event.type);
                         close_current_app();
                         show_overlay({
@@ -2602,59 +2575,59 @@ function draw_overlay_screen() {
                 }
 
                 if (overlay.event.type == Calendar_Event_Type.one_on_one) {
-                    menu.message("На еженедельных One on One встречах члены команды встречаются с их прямым менеджером и обсуждают рабочие и личные вопросы в свободной форме. Это помогает увеличить доверие между членами команды и выявить потенциальные проблемы заранее");
+                    menu.message(i18n.overlay.calendar.one_on_one.info());
 
-                    if (menu.button("Подключиться к встрече (1 ч.)")) {
+                    if (menu.button(i18n.overlay.calendar.action.one_on_one())) {
                         game.player.attended_meetings_today.push(overlay.event.type);
                         overlay.event.teammate.skill_level += 0.05;
                         skip_hours(1);
-                        message_overlay(`One on One прошел продуктивно. ${overlay.event.teammate.name} поделился своими переживаниями по поводу дедлайна и успехами в работе. Вы поделились кусочком тимлидской мудрости и ${overlay.event.teammate.name} явно остался доволен [+Навык]`);
+                        message_overlay(i18n.overlay.calendar.one_on_one.message({ name: overlay.event.teammate.name }));
                     }
                 }
 
                 if (overlay.event.type == Calendar_Event_Type.knowledge_sharing) {
-                    menu.message(`Knowledge Sharing - еженедельное событие на котором один из разработчиков освещает потенциально полезную коллегам тему. Тема сегодняшней встречи - ${overlay.event.topic}`);
+                    menu.message(i18n.overlay.calendar.knowledge_sharing.info({ topic: overlay.event.topic }));
 
-                    if (menu.button("Присоединиться и послушать (1 ч.)")) {
+                    if (menu.button(i18n.overlay.calendar.action.knowledge_sharing())) {
                         game.player.attended_meetings_today.push(overlay.event.type);
                         game.player.productivity += 20;
                         skip_hours(1);
-                        message_overlay(`Шейринг сегодня был максимально интересный. Вы буквально прозрели на тему ${overlay.event.topic} и чувствуете, будто теперь можете вообще всё [+Производительность]`);
+                        message_overlay(i18n.overlay.calendar.knowledge_sharing.message({ topic: overlay.event.topic }));
                     }
                 }
 
                 if (overlay.event.type == Calendar_Event_Type.candidate_interview) {
-                    menu.message(`Одна из Ваших обязанностей - участвовать в собеседованиях потенциальных кандидатов, в том числе в другие команды.`);
+                    menu.message(i18n.overlay.calendar.interview.info());
 
-                    if (menu.button("Подключиться к звонку (2 ч.)")) {
+                    if (menu.button(i18n.overlay.calendar.action.interview())) {
                         game.player.attended_meetings_today.push(overlay.event.type);
                         skip_hours(2);
-                        message_overlay(`Собеседование как всегда было довольно выматывающим. Но сегодняшний кандидат, ${overlay.event.candidate_name}, был довольно интересным.`);
+                        message_overlay(i18n.overlay.calendar.interview.message({ candidate_name: overlay.event.candidate_name }));
                     }
                 }
 
                 if (overlay.event.type == Calendar_Event_Type.lead_meeting) {
-                    menu.message(`Еженедельный синк тимлидов служит чем-то вроде форума для быстрой коммуникации среди команд. На нем всегда можно узнать свежие новости о работе других коллег или задать вопрос о пересекающейся функциональности`);
+                    menu.message(i18n.overlay.calendar.lead_meeting.info());
 
-                    if (menu.button("Подключиться к встрече (1 ч.)")) {
+                    if (menu.button(i18n.overlay.calendar.action.lead_meeting())) {
                         game.player.attended_meetings_today.push(overlay.event.type);
                         skip_hours(1);
-                        message_overlay(`На сегодняшнем синке не было ничего особо интересного`);
+                        message_overlay(i18n.overlay.calendar.lead_meeting.message());
                     }
                 }
 
-                if (menu.button("Подумать еще")) {
+                if (menu.button(i18n.overlay.calendar.action.do_something_else())) {
                     exit_overlay();
                 }
             } else {
                 if (overlay.event.start_hour < game.hour_of_day) {
                     if (game.hour_of_day < overlay.event.start_hour + overlay.event.duration) {
-                        menu.message("Эта встреча уже началась, Вы опоздали!");
+                        menu.message(i18n.overlay.calendar.already_started());
                     } else {
-                        menu.message("Это событие уже закончилось");
+                        menu.message(i18n.overlay.calendar.already_finished());
                     }
                 } else {
-                    menu.message("Это событие еще не началось, к нему можно будет присоединиться позже!")
+                    menu.message(i18n.overlay.calendar.not_started_yet())
                 }
             }
 
@@ -2671,31 +2644,31 @@ function draw_overlay_screen() {
             const menu = auto_menu(center.x - menu_width / 2, center.y + 32, menu_width);
 
             if (overlay.website == Website.jabr) {
-                menu.message("Жабр - один из самых известных ресурсов с постоянно пополняющимся архивом технических статей")
+                menu.message(i18n.overlay.browser.jabr())
 
-                if (menu.button("Читать Жабр (1 ч.)")) {
+                if (menu.button(i18n.overlay.browser.action.read_jabr())) {
                     skip_hours(1);
-                    message_overlay(`Пролистав пару технических статей и с десяток холиваров в комментариях, Вы буквально чувствуете, как растет Ваш мозг [+Производительность]`);
+                    message_overlay(i18n.overlay.browser.jabr_read());
                     game.player.productivity += 5;
                 }
             } else if (overlay.website == Website.you_cube) {
-                menu.message("Интересно что нового на Вашем любимом сайте с видосиками?")
+                menu.message(i18n.overlay.browser.you_cube())
 
-                if (menu.button("Смотреть Юкуб (1 ч.)")) {
+                if (menu.button(i18n.overlay.browser.action.you_cube())) {
                     const channels = [
-                        "смешные моменты из Офиса",
-                        "пару видосов Лапенко",
-                        "интервью Дудя",
-                        "обзор Вилсакома",
-                        "летсплей Куплинова",
-                        "серию Зашкварных Историй",
-                        "видосик Сыендука",
-                        "эпизод TiX",
-                        "видео об очередном изобретении KREOSAN'а"
+                        i18n.overlay.browser.video.v1(),
+                        i18n.overlay.browser.video.v2(),
+                        i18n.overlay.browser.video.v3(),
+                        i18n.overlay.browser.video.v4(),
+                        i18n.overlay.browser.video.v5(),
+                        i18n.overlay.browser.video.v6(),
+                        i18n.overlay.browser.video.v7(),
+                        i18n.overlay.browser.video.v8(),
+                        i18n.overlay.browser.video.v9()
                     ];
 
                     skip_hours(1);
-                    message_overlay(`Посмотрев ${random_in_array(channels)}, Вы чувствуете себя совершенно свободным от мирских забот [-Выгорание]`);
+                    message_overlay(i18n.overlay.browser.you_cube_watched({ video: random_in_array(channels) }));
                     game.player.burnout = Math.max(0, game.player.burnout - 5);
                 }
             } else {
@@ -2713,7 +2686,7 @@ function draw_overlay_screen() {
             const menu_width = 300;
             const menu = auto_menu(top_left.x, top_left.y, menu_width);
 
-            if (menu.button("Завершить работу (на сегодня)")) {
+            if (menu.button(i18n.overlay.computer.finish_work_for_today())) {
                 do {
                     skip_hours(1);
                     increase_health(4);
@@ -2746,9 +2719,9 @@ function draw_overlay_screen() {
             const entry = overlay.entry;
 
             if (entry.type == Inbox_Entry_Type.review_task && entry.task.status == Task_Status.in_review) {
-                menu.message("После выполнения задачи разработчиком необходимо провести ревью кода. Обычно эта задача ложится на тимлида (т.е. Вас)");
+                menu.message(i18n.overlay.inbox.review_info());
 
-                if (menu.button("Сделать ревью")) {
+                if (menu.button(i18n.overlay.inbox.action.review())) {
                     show_overlay({
                         type: Overlay_Type.code_review,
                         task: entry.task
@@ -2759,30 +2732,30 @@ function draw_overlay_screen() {
             }
 
             if (entry.type == Inbox_Entry_Type.task_returned_to_dev) {
-                menu.message("Судя по всему, команда QA обнаружила в этой задаче серьезные баги и вернула ее обратно разработчику");
+                menu.message(i18n.overlay.inbox.returned_to_dev());
 
-                if (menu.button("Пометить прочитанным")) {
+                if (menu.button(i18n.overlay.inbox.action.mark_as_read())) {
                     entry.read = true;
                     exit_overlay();
                 }
             }
 
             if (entry.type == Inbox_Entry_Type.production_bug) {
-                menu.message(`Тикет от саппорта. Судя по всему в одной из наших задач, которая уже уехала на прод, обнаружились серьезные баги. Их нужно исправить за отведенное время (по нашей договоренности с клиентами). Багов осталось: ${entry.task.bugs}`);
+                menu.message(i18n.overlay.inbox.production_bug({ num_bugs: entry.task.bugs }));
 
-                if (menu.button("Работать над багами (1 ч.)")) {
+                if (menu.button(i18n.overlay.inbox.action.fix_bugs())) {
                     increase_burnout_if_working_past_work_time();
                     skip_hours(1);
                     entry.task.bugs--;
 
                     if (entry.task.bugs == 0) {
-                        message_overlay(`Похоже, что все проблемы в тикете были исправлены, клиенты подтвердили отсутствие дефектов, можно расслабиться`);
+                        message_overlay(i18n.overlay.inbox.production_bug_fixed());
                         entry.read = true;
                     }
                 }
             }
 
-            if (menu.button("Подумать еще")) {
+            if (menu.button(i18n.overlay.inbox.action.do_something_else())) {
                 exit_overlay();
             }
 
@@ -2804,31 +2777,31 @@ function draw_overlay_screen() {
             function task_text(): string {
                 switch (task.status) {
                     case Task_Status.new: {
-                        return "Над этой задачей еще никто не начинал работу";
+                        return i18n.overlay.task.status.not_started();
                     }
 
                     case Task_Status.in_development: {
                         if (task.assigned_to.you) {
-                            return "Сейчас назначена на Вас!";
+                            return i18n.overlay.task.status.in_dev.you();
                         } else {
-                            return `Над этой задачей сейчас работает ${task.assigned_to.teammate.name}`;
+                            return i18n.overlay.task.status.in_dev.teammate({ name: task.assigned_to.teammate.name });
                         }
                     }
 
                     case Task_Status.in_review: {
                         if (task.assigned_to.you) {
-                            return "Вы передали эту задачу в ревью другим тимлидам. Обычно это занимает порядка одного рабочего дня.";
+                            return i18n.overlay.task.status.in_review.yours();
                         } else {
-                            return `Задача ${task.assigned_to.teammate.name_genitive} готова и ждет от Вас ревью`;
+                            return i18n.overlay.task.status.in_review.teammate({ name: task.assigned_to.teammate });
                         }
                     }
 
                     case Task_Status.in_testing: {
-                        return "Эта задача была передана в тестирование. Если все идет нормально, этот процесс занимает порядка одного рабочего дня, но при обнаружении серьезных дефектов, задача всегда может быть возвращена разработчику."
+                        return i18n.overlay.task.status.in_testing();
                     }
 
                     case Task_Status.done: {
-                        return "Эта задача уже на проде. Мы такие молодцы!"
+                        return i18n.overlay.task.status.done();
                     }
 
                 }
@@ -2837,14 +2810,14 @@ function draw_overlay_screen() {
             menu.message(`"${overlay.task.name}". ${task_text()}`);
 
             if (task.status == Task_Status.in_development && task.assigned_to.you) {
-                if (menu.button("Перейти в редактор CodeJunkie")) {
+                if (menu.button(i18n.overlay.task.action.go_to_editor())) {
                     open_app(App_Type.code_junkie);
                     exit_overlay();
                 }
             }
 
             if (task.status == Task_Status.in_review && !task.assigned_to.you) {
-                if (menu.button("Сделать ревью")) {
+                if (menu.button(i18n.overlay.task.action.go_to_review())) {
                     show_overlay({
                         type: Overlay_Type.code_review,
                         task: task
@@ -2855,7 +2828,7 @@ function draw_overlay_screen() {
             }
 
             if (task.status == Task_Status.new && !find_your_first_current_task_in_dev()) {
-                if (menu.button("Взять в разработку")) {
+                if (menu.button(i18n.overlay.task.action.assign_to_you())) {
                     assign_task(task, { you: true });
                 }
             }
@@ -2876,19 +2849,23 @@ function draw_overlay_screen() {
 
             if (is_work_time()) {
                 if (task && task.developer_stuck_hours > 0) {
-                    if (menu.button(`Помочь ${teammate.name_dative} с задачей (1 ч.)`)) {
+                    if (menu.button(i18n.overlay.teammate.action.help({ name: teammate.name }))) {
                         task.developer_stuck_hours = 0;
                         teammate.skill_level += 0.05;
 
-                        receive_message_from(teammate, `Спасибо${random_in_array(["", "!", "!!"])}`, true);
+                        receive_message_from(teammate, random_in_array([
+                            i18n.chat.thanks.v1(),
+                            i18n.chat.thanks.v2(),
+                            i18n.chat.thanks.v3()
+                        ]), true);
                         skip_hours(1);
-                        message_overlay(`Свежим взглядом пробежавшись по задаче ${teammate.name_genitive}, Вы довольно быстро обнаружили проблему и мудрым советом помогли ему продолжить работу [+Навык]`)
+                        message_overlay(i18n.overlay.teammate.helped({ name: teammate.name }));
                     }
                 } else {
-                    menu.message(`Не приходит в голову, о чем сейчас можно было бы поговорить`)
+                    menu.message(i18n.overlay.teammate.nothing_to_talk_about());
                 }
             } else {
-                menu.message(`Время уже не рабочее и ${teammate.name} ушел в оффлайн, лучше написать ему позже`)
+                menu.message(i18n.overlay.teammate.cant_talk_after_work({ name: teammate.name }))
             }
 
             menu.finish();
@@ -2898,6 +2875,7 @@ function draw_overlay_screen() {
             break;
         }
 
+        // @Lang
         case Overlay_Type.standup_report: {
             const queue = overlay.queue;
             const teammate = queue[0];
@@ -2951,7 +2929,7 @@ function draw_overlay_screen() {
             if (teammate) {
                 const current_task = find_first_assigned_task_in_dev(teammate);
 
-                draw_standup_avatar(teammate.avatar, teammate.name, teammate.skill_title);
+                draw_standup_avatar(teammate.avatar, teammate.name.nominative, teammate.skill_title);
 
                 function continue_to_next_teammate() {
                     const updated_queue = queue.slice(1);
@@ -3088,25 +3066,25 @@ function draw_overlay_screen() {
                     const hours = my_task.remaining_work_hours;
 
                     if (hours == my_task.estimated_time) {
-                        return `В этой задаче совсем ничего не сделано. Время поработать?`
+                        return i18n.overlay.editor.nothing_done();
                     }
 
                     // TODO more of those
                     if (hours > 5) {
-                        return `В текущей задаче еще полно работы`;
+                        return i18n.overlay.editor.lots_of_work();
                     } else if (hours > 2) {
-                        return `Кажется, в этой задаче большая часть работы готова`;
+                        return i18n.overlay.editor.mostly_done();
                     } else if (hours == 0) {
-                        return `Основной код задачи готов!`;
+                        return i18n.overlay.editor.done();
                     } else {
-                        return `В задачке осталось совсем немного работы`;
+                        return i18n.overlay.editor.almost_there();
                     }
                 }
 
                 menu.message(work_remaining_message());
 
                 if (my_task.remaining_work_hours > 0) {
-                    if (menu.button(`Работать над текущей задачей (1 ч.)`)) {
+                    if (menu.button(i18n.overlay.editor.work_on_task())) {
                         increase_burnout_if_working_past_work_time();
                         skip_hours(1);
 
@@ -3117,22 +3095,22 @@ function draw_overlay_screen() {
                         my_task.bugs += Math.floor(Math.random() * 2.5);
 
                         if (my_task.remaining_work_hours > 5) {
-                            message_overlay_and_then(overlay, `Хрустнув пальцами, Вы приступили к работе. Спустя час непрерывного стука по клавиатуре Вы наконец дошли до состояния, когда можно сделать коммит`)
+                            message_overlay_and_then(overlay, i18n.overlay.editor.work_done_1())
                         } else if (my_task.remaining_work_hours > 2) {
-                            message_overlay_and_then(overlay, `Потянувшись в кресле, Вы приступили к работе. Спустя час злостного рефакторинга Вы наконец дошли до состояния, когда можно сделать коммит`)
+                            message_overlay_and_then(overlay, i18n.overlay.editor.work_done_2());
                         } else if (my_task.remaining_work_hours == 0) {
-                            message_overlay_and_then(overlay, `Сделав глоток кофе, Вы приступили к работе. Спустя час распиливания сервисов Вы наконец дошли до состояния, когда можно сделать коммит`);
+                            message_overlay_and_then(overlay, i18n.overlay.editor.work_done_3());
                         } else {
-                            message_overlay_and_then(overlay, `Глубоко вдохнув, Вы приступили к работе. Спустя час переписывания чужого кода Вы наконец дошли до состояния, когда можно сделать коммит`)
+                            message_overlay_and_then(overlay, i18n.overlay.editor.work_done_4())
                         }
                     }
                 } else {
-                    if (menu.button(`Передать задачу в ревью`)) {
-                        message_overlay(`С чувством выполненного долга, Вы передали задачу в ревью`);
+                    if (menu.button(i18n.overlay.editor.action.pass_to_review())) {
+                        message_overlay(i18n.overlay.editor.passed_to_review());
                         pass_task_to_review(my_task);
                     }
 
-                    if (!my_task.tests_written && menu.button(`Написать тесты (1 ч.)`)) {
+                    if (!my_task.tests_written && menu.button(i18n.overlay.editor.action.write_tests())) {
                         const found_bugs = Math.round((0.5 + Math.random() * 0.5) * my_task.bugs);
 
                         my_task.time_spent++;
@@ -3140,28 +3118,28 @@ function draw_overlay_screen() {
                         my_task.bugs -= found_bugs;
 
                         increase_burnout_if_working_past_work_time();
-                        message_overlay_and_then(overlay, `Поймав по пути пару багов, Вы покрыли большую часть кода тестами. На душе стало чуть-чуть спокойнее`);
+                        message_overlay_and_then(overlay, i18n.overlay.editor.tests_done());
                         skip_hours(1);
                     }
 
-                    if (!my_task.instructions_for_qa_written && menu.button(`Написать подробные инструкции для QA (1 ч.)`)) {
+                    if (!my_task.instructions_for_qa_written && menu.button(i18n.overlay.editor.action.write_qa_instructions())) {
                         my_task.instructions_for_qa_written = true;
                         my_task.time_spent++;
                         increase_burnout_if_working_past_work_time();
-                        message_overlay_and_then(overlay, `Попытавшись успокоить совесть, Вы подробно описали изменения сделанные в задаче и моменты, которые нужно тщательно протестировать. Это точно должно упростить и ускорить процесс QA`);
+                        message_overlay_and_then(overlay, i18n.overlay.editor.qa_instructions_done());
                         skip_hours(1);
                     }
                 }
             } else {
-                menu.message("С текущей задачкой покончено!");
+                menu.message(i18n.overlay.editor.task_done());
 
-                if (menu.button(`Открыть Wrike и взять следующую`)) {
+                if (menu.button(i18n.overlay.editor.action.open_wrike_to_take_new_task())) {
                     open_app(App_Type.wrike);
                     exit_overlay();
                 }
             }
 
-            if (menu.button(`Заняться чем-нибудь другим`)) {
+            if (menu.button(i18n.overlay.editor.action.do_something_else())) {
                 exit_overlay()
             }
 
@@ -3179,16 +3157,16 @@ function draw_overlay_screen() {
             const menu = big_centered_menu();
 
             if (task.bugs > 5) {
-                menu.message(`Вы открыли задачу ${task.assigned_to.teammate.name_genitive} в вечно тормозящем GitPub'e. Код выглядит откровенно плохо`)
+                menu.message(i18n.overlay.code_review.look_at_code.bad({ name: task.assigned_to.teammate.name }));
             } else if (task.bugs > 2) {
-                menu.message(`Вы открыли задачу ${task.assigned_to.teammate.name_genitive} в вечно тормозящем GitPub'e. Код смотрится довольно небрежным`)
+                menu.message(i18n.overlay.code_review.look_at_code.not_too_bad({ name: task.assigned_to.teammate.name }));
             } else {
-                menu.message(`Вы открыли задачу ${task.assigned_to.teammate.name_genitive} в вечно тормозящем GitPub'e. На первый взляд, код неплох`)
+                menu.message(i18n.overlay.code_review.look_at_code.ok({ name: task.assigned_to.teammate.name }));
             }
 
-            if (menu.button("Передать в тестирование не глядя")) {
+            if (menu.button(i18n.overlay.code_review.action.pass_to_qa_without_looking())) {
                 pass_task_to_qa(overlay.task, 8);
-                message_overlay(`Недолго думая, Вы поставили 'Review OK' и передали задачу в QA. Своей команде Вы все-таки доверяете.`);
+                message_overlay(i18n.overlay.code_review.passed_to_qa_without_looking());
             }
 
             // if (button("Докопаться до кодстайла (1 ч.)")) {
@@ -3196,21 +3174,21 @@ function draw_overlay_screen() {
             //     pass_task_to_qa(screen.task);
             // }
 
-            if (menu.button("Тщательно просмотреть код (1 ч.)")) {
+            if (menu.button(i18n.overlay.code_review.action.look_at_code())) {
                 increase_burnout_if_working_past_work_time();
                 skip_hours(1);
 
                 if (overlay.task.bugs > 0) {
                     const found_bugs = Math.round((0.5 + Math.random() * 0.5) * overlay.task.bugs);
                     return_task_from_review_to_development(overlay.task, found_bugs);
-                    message_overlay(`Тщательно прошерстив код, Вы обнаружили в нем несколько багов и спорных моментов. Задача возвращается обратно к разработчику.`);
+                    message_overlay(i18n.overlay.code_review.found_bugs());
                 } else {
                     pass_task_to_qa(overlay.task, 8);
-                    message_overlay(`Долго щурясь и всматриваясь в код, Вы все-же не смогли найти к чему придраться. Задача отправляется в тестирование`);
+                    message_overlay(i18n.overlay.code_review.couldnt_find_bugs());
                 }
             }
 
-            if (menu.button("Подумать еще")) {
+            if (menu.button(i18n.overlay.code_review.action.do_something_else())) {
                 exit_overlay();
             }
 
@@ -3224,40 +3202,19 @@ function draw_overlay_screen() {
         case Overlay_Type.game_over: {
             function game_over_message(reason: Game_Over_Reason): string {
                 switch (reason) {
-                    case Game_Over_Reason.victory:
-                        return `Задачка за задачкой уходили в прод и Вы едва успели заметить, как закончился беклог. ` +
-                            `Вы сделали это! Дедлайн побежден!` // TODO
-
-                    case Game_Over_Reason.deadline_failed:
-                        return `День за днем, неделя за неделей, дедлайн подбирался всё ближе. ` +
-                            `Вы уже давно чувствовали, что это случится, но в каком-то рьяном ступоре продолжали работать, ` +
-                            `возможно надеясь, что оно как-то само собой рассосется. Не рассосалось. Дедлайн провален. Клиент потерян. Крышка.`;
-
-                    case Game_Over_Reason.fired:
-                        return `Ваш компьютер неожиданно заблокировался. ` +
-                            `В сотый раз проклиная производителей PearNote Вы попытались вернуться к работе, введя пароль. ` +
-                            `Ноутбук все продолжал отрицать легитимность его хозяина, издавая противный звук при каждой неудачной попытке входа. ` +
-                            `"Видимо ему совсем кранты", подумали Вы, доставая телефон, чтобы написать инженерам хелпдеска. ` +
-                            `На почту упало новое письмо. "Уволен одним днем за неисполнение служебных обязанностей". Что?!`;
-
-                    case Game_Over_Reason.bad_health:
-                        return `В последние дни Вы совсем погрузились в работу, игнорируя приемы пищи и сон. ` +
-                            `За всем этим Вы и не заметили, как кожа приобрела бледный оттенок, а под глазами появились синие мешки. ` +
-                            `Ваши родственники нашли Вас в состоянии обморока прямо у компьютера. ` +
-                            `Вы отправляетесь в больницу, о работе можно забыть на следующие пару недель, не говоря уже о приближающемся дедлайне.`;
-
-                    case Game_Over_Reason.burnout:
-                        return `Вы уже и забыли, что такое отдых. Закрывая задачу за задачей, Вы не заметили, как все свободное время превратилось в рабочее.` +
-                            `В какой-то момент внутри Вас что-то щелкнуло. Зачем Вам вообще это нужно? К чему все эти старания? Куда я двигаюсь?` +
-                            `"А пропади оно все пропадом! К черту работу, к черту дедлайн, мне уже все равно!", подумали Вы и купили авиабилет в Саратов, к родителям. Выгорание - это Вам не шутки.`;
+                    case Game_Over_Reason.victory: return i18n.overlay.game_over.reason.victory();
+                    case Game_Over_Reason.deadline_failed: return i18n.overlay.game_over.reason.deadline_failed();
+                    case Game_Over_Reason.fired: return i18n.overlay.game_over.reason.fired();
+                    case Game_Over_Reason.bad_health: return i18n.overlay.game_over.reason.bad_health();
+                    case Game_Over_Reason.burnout: return i18n.overlay.game_over.reason.burnout()
                 }
             }
 
             function reason_tip(reason: Game_Over_Reason): string | undefined {
                 switch (reason) {
-                    case Game_Over_Reason.bad_health: return "Не забывайте есть и достаточно спать";
-                    case Game_Over_Reason.burnout: return "Меньше работайте в нерабочее время, в том числе в выходные!";
-                    case Game_Over_Reason.fired: return "Следите за посещением обязательным рабочих встреч и багами на продакшне (в вашем инбоксе)"
+                    case Game_Over_Reason.bad_health: return i18n.overlay.game_over.tip.bad_health();
+                    case Game_Over_Reason.burnout: return i18n.overlay.game_over.tip.burnout();
+                    case Game_Over_Reason.fired: return i18n.overlay.game_over.tip.fired();
                 }
             }
 
@@ -3266,7 +3223,13 @@ function draw_overlay_screen() {
             const menu = big_centered_menu(700);
             menu.center_text();
             menu.padding(32);
-            menu.message(`${game_over_message(overlay.reason)}\n\nИгра окончена\nСложность: ${difficulty_name(game.difficulty)}\n${deadline_stats_message(true)}\n${tip ? `\nПодсказка: ${tip}\n` : ""}\nПерезагрузите страницу, чтобы начать заново.`);
+            menu.message(
+                `${game_over_message(overlay.reason)}\n\n` +
+                `${i18n.overlay.game_over.message.header()}\n` +
+                `${i18n.overlay.game_over.message.difficulty({ difficulty: difficulty_name(game.difficulty) })}\n` +
+                `${deadline_stats_message(true)}\n` +
+                `${tip ? `\n${i18n.overlay.game_over.message.tip({ tip: tip })}\n` : ""}\n` +
+                `${i18n.overlay.game_over.message.restart()}`);
             menu.finish();
 
             block_exit();
@@ -3303,11 +3266,11 @@ function skip_hours(how_many: number) {
 
                         if (Math.random() < chance_to_get_stuck && !task.has_already_stuck_once) {
                             const help_messages = [
-                                `Я что-то залип с ${task.name}, поможешь?`,
-                                `Не могу разобраться с ${task.name} ${random_in_array(["(", "((", "((("])} Можешь помочь?`,
-                                `Что-то я совсем застрял на ${task.name}.. Подсобишь?`,
-                                `${task.name} оказалась мне не по силам, поможешь?`,
-                                `Можем созвониться по ${task.name}? Не могу разобрать одну проблему`
+                                i18n.chat.help.v1({ task_name: task.name }),
+                                i18n.chat.help.v2({ task_name: task.name, sadness: random_up_to(3) }),
+                                i18n.chat.help.v3({ task_name: task.name }),
+                                i18n.chat.help.v4({ task_name: task.name }),
+                                i18n.chat.help.v5({ task_name: task.name })
                             ];
 
                             task.developer_stuck_hours = 6;
@@ -3342,11 +3305,11 @@ function skip_hours(how_many: number) {
 
                         if (task.developer_stuck_hours == 0) {
                             const ok_messages = [
-                                `Разобрался`,
-                                `Всё, сам догнял, сорян`,
-                                `Ух, все, допер сам`,
-                                `Ага, понял сам в чем проблема, не отвлекаю`,
-                                `Осилил сам вроде, если что ещё напишу`
+                                i18n.chat.figured_out.v1(),
+                                i18n.chat.figured_out.v2(),
+                                i18n.chat.figured_out.v3(),
+                                i18n.chat.figured_out.v4(),
+                                i18n.chat.figured_out.v5()
                             ];
 
                             receive_message_from(task.assigned_to.teammate, `${random_in_array(ok_messages)}${random_in_array(["", " 👌"])}`, true);
@@ -3503,8 +3466,7 @@ function get_app_notifications(app: App): number {
         }
 
         case App_Type.wrike: {
-            // TODO @Hack ?
-            return game.inbox.map(entry => entry.read ? 0 : 1 as number).reduce((l, r) => l + r, 0);
+            return game.inbox.filter(entry => entry.read).length;
         }
 
         default: return 0;
@@ -3594,30 +3556,30 @@ function draw_app(app: App) {
 }
 
 function health_label(health: number) {
-    if (health > 80) return "Отличное";
-    if (health > 60) return "Хорошее";
-    if (health > 40) return "Неважное";
-    if (health > 20) return "Плохое";
-    if (health > 0) return "Отвратительное";
-    return "Обморок";
+    if (health > 80) return i18n.status.health.perfect();
+    if (health > 60) return i18n.status.health.good();
+    if (health > 40) return i18n.status.health.fine();
+    if (health > 20) return i18n.status.health.bad();
+    if (health > 0) return i18n.status.health.terrible();
+    return i18n.status.health.zero();
 }
 
 function company_status_label(status: number) {
-    if (status > 80) return "Отличное";
-    if (status > 60) return "HR'ы начинают что-то подозревать";
-    if (status > 40) return "С Вашим менеджером ведутся разговоры";
-    if (status > 20) return "Оформляется Personal Improvement Plan";
-    if (status > 0) return "Подписываются бумаги об увольнении";
-    return "Уволен";
+    if (status > 80) return i18n.status.company.perfect();
+    if (status > 60) return i18n.status.company.good();
+    if (status > 40) return i18n.status.company.fine();
+    if (status > 20) return i18n.status.company.bad();
+    if (status > 0) return i18n.status.company.terrible();
+    return i18n.status.company.zero();
 }
 
 function burnout_label(burnout: number) {
-    if (burnout == 100) return "Выгорел";
-    if (burnout > 80) return "Близко к выгоранию";
-    if (burnout > 60) return "Работа вызывает отвращение";
-    if (burnout > 40) return "Не хочется вставать по утрам";
-    if (burnout > 20) return "Легкое раздражение от работы";
-    return "Отличное";
+    if (burnout == 100) return i18n.status.burnout.zero();
+    if (burnout > 80) return i18n.status.burnout.terrible();
+    if (burnout > 60) return i18n.status.burnout.bad();
+    if (burnout > 40) return i18n.status.burnout.fine();
+    if (burnout > 20) return i18n.status.burnout.good();
+    return i18n.status.burnout.perfect();
 }
 
 function do_one_frame() {
@@ -3655,10 +3617,10 @@ function do_one_frame() {
     ctx.fillStyle = "#fff"
     ctx.shadowBlur = 3;
     ctx.shadowColor = "#000";
-    label(`Физическое здоровье: ${health_label(game.player.health)}`);
-    label(`Ментальное здоровье: ${burnout_label(game.player.burnout)}`);
-    label(`Положение в компании: ${company_status_label(game.player.company_status)}`);
-    label(`Производительность: ${game.player.productivity}%`);
+    label(i18n.status.label.health({ status: health_label(game.player.health) }));
+    label(i18n.status.label.burnout({ status: burnout_label(game.player.burnout) }));
+    label(i18n.status.label.company({ status: company_status_label(game.player.company_status) }));
+    label(i18n.status.label.performance({ value: game.player.productivity }));
     ctx.shadowBlur = 0;
 
     push_size(50);
@@ -3822,23 +3784,30 @@ function generate_team(): Teammate[] {
         }
     }
 
+    // @Lang
     return [{
         ...base(2),
-        name: "Иван",
-        name_genitive: "Ивана",
-        name_dative: "Ивану",
+        name: {
+            nominative: "Иван",
+            genitive: "Ивана",
+            dative: "Ивану",
+        },
         skill_level: 0.7
     }, {
         ...base(2),
-        name: "Вася",
-        name_genitive: "Васи",
-        name_dative: "Васе",
+        name: {
+            nominative: "Вася",
+            genitive: "Васи",
+            dative: "Васе",
+        },
         skill_level: 0.5
     }, {
         ...base(1),
-        name: "Дима",
-        name_genitive: "Димы",
-        name_dative: "Диме",
+        name: {
+            nominative: "Дима",
+            genitive: "Димы",
+            dative: "Диме"
+        },
         skill_level: 0.3,
     }/*, {
         name: "Лёша",
@@ -3967,28 +3936,29 @@ function generate_backlog(team_size: number, days_until_deadline: number, diffic
 
 function day_of_week_starts(day: Day_Of_Week) {
     switch (day) {
-        case 1: return "Наступил понедельник";
-        case 2: return "Наступил вторник";
-        case 3: return "Наступила среда";
-        case 4: return "Наступил четверг";
-        case 5: return "Наступила пятница";
-        case 6: return "Наступила суббота";
-        case 7: return "Наступило воскресенье";
+        case 1: return i18n.overlay.weekend.day.mon();
+        case 2: return i18n.overlay.weekend.day.tue();
+        case 3: return i18n.overlay.weekend.day.wed();
+        case 4: return i18n.overlay.weekend.day.thu();
+        case 5: return i18n.overlay.weekend.day.fri();
+        case 6: return i18n.overlay.weekend.day.sat();
+        case 7: return i18n.overlay.weekend.day.sun();
     }
 }
 
 function day_of_week_name(day: Day_Of_Week) {
     switch (day) {
-        case 1: return "Понедельник";
-        case 2: return "Вторник";
-        case 3: return "Среда";
-        case 4: return "Четверг";
-        case 5: return "Пятница";
-        case 6: return "Суббота";
-        case 7: return "Воскресенье";
+        case 1: return i18n.top_bar.day.mon();
+        case 2: return i18n.top_bar.day.tue();
+        case 3: return i18n.top_bar.day.wed();
+        case 4: return i18n.top_bar.day.thu();
+        case 5: return i18n.top_bar.day.fri();
+        case 6: return i18n.top_bar.day.sat();
+        case 7: return i18n.top_bar.day.sun();
     }
 }
 
+// @Lang
 function generate_candidate_name() {
     const first_names = [
         "Авдей",

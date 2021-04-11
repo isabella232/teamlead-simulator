@@ -1,3 +1,3 @@
 require('esbuild').build({
-    ...require("./build-options").options
+    ...require("./builder").options
 }).catch(() => process.exit(1))

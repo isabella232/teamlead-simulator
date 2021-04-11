@@ -2,7 +2,9 @@
 
 `node watch` for initial compilation and to watch for changes
 
-`serve public` to start local server
+`node serve` to start local server
+
+`node generate-declarations` to update declarations for localization strings
 
 Game will start at http://127.0.0.1:3333/
 

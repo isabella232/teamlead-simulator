@@ -1,7 +1,26 @@
 const esbuild = require('esbuild');
+const { options, generate_declarations } = require("./builder");
+
+options.plugins.unshift({
+    name: "regenerate-localization",
+    setup(build) {
+        const properties = require("dot-properties");
+        const fs = require("fs");
+        const path = require("path");
+
+        build.onResolve({ filter: /\.properties$/ }, (args) => {
+            const full_path = path.join(args.resolveDir, "messages", args.path);
+            const filename = path.relative(path.join(args.resolveDir, "messages"), full_path);
+            const property_tree = properties.parse(fs.readFileSync(full_path, "utf8"), true);
+            const module_content = generate_declarations(filename, property_tree);
+
+            fs.writeFileSync(path.join(args.resolveDir, "messages", `${filename}.d.ts`), module_content);
+        });
+    }
+});
 
 esbuild.build({
-    ...require("./build-options").options,
+    ...options,
     watch: {
         onRebuild(error, result) {
             if (error) console.error('watch build failed:', error)
@@ -9,7 +28,7 @@ esbuild.build({
         },
     },
 }).then(result => {
-    console.log("Build ok");
+    console.log("Build ok", result);
 
     const messages = esbuild.formatMessagesSync(result.warnings, { kind: "warning" });
 
