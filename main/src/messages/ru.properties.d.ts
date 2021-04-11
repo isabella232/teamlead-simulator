@@ -287,6 +287,10 @@ declare module "ru.properties" {
                 v5(): string;
             }
         }
+        candidate: {
+            first_names(): string;
+            last_names(): string;
+        }
     }
     
     const def: Keys;
