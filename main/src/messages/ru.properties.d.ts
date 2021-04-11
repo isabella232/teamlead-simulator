@@ -278,6 +278,15 @@ declare module "ru.properties" {
                 v5(arg: { task_name: string }): string;
             }
         }
+        teammate: {
+            name_nom_gen_dat: {
+                v1(): string;
+                v2(): string;
+                v3(): string;
+                v4(): string;
+                v5(): string;
+            }
+        }
     }
     
     const def: Keys;

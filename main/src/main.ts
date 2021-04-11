@@ -3784,37 +3784,39 @@ function generate_team(): Teammate[] {
         }
     }
 
-    // @Lang
+    function parse_name(encoded: string): Given_Name {
+        const parts = encoded.split("|");
+
+        return {
+            nominative: parts[0],
+            genitive: parts[1],
+            dative: parts[2]
+        }
+    }
+
+    const names = [
+        parse_name(i18n.teammate.name_nom_gen_dat.v1()),
+        parse_name(i18n.teammate.name_nom_gen_dat.v2()),
+        parse_name(i18n.teammate.name_nom_gen_dat.v3()),
+        parse_name(i18n.teammate.name_nom_gen_dat.v4()),
+        parse_name(i18n.teammate.name_nom_gen_dat.v5())
+    ];
+
+    shuffle(names);
+
     return [{
         ...base(2),
-        name: {
-            nominative: "Иван",
-            genitive: "Ивана",
-            dative: "Ивану",
-        },
+        name: names[0],
         skill_level: 0.7
     }, {
         ...base(2),
-        name: {
-            nominative: "Вася",
-            genitive: "Васи",
-            dative: "Васе",
-        },
+        name: names[1],
         skill_level: 0.5
     }, {
         ...base(1),
-        name: {
-            nominative: "Дима",
-            genitive: "Димы",
-            dative: "Диме"
-        },
+        name: names[2],
         skill_level: 0.3,
-    }/*, {
-        name: "Лёша",
-        name_genitive: "Лёши",
-        name_dative: "Лёше",
-        skill_level: 0.1
-    }*/];
+    }];
 }
 
 const words = {
