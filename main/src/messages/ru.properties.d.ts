@@ -44,6 +44,41 @@ declare module "ru.properties" {
                     do_something_else(): string;
                 }
             }
+            standup: {
+                you: {
+                    name(): string;
+                    working_on(arg: { task: string }): string;
+                    will_take_next_task(): string;
+                }
+                teammate: {
+                    worked_on: {
+                        v1(): string;
+                        v2(): string;
+                        v3(): string;
+                        v4(): string;
+                        v5(): string;
+                        v6(): string;
+                        v7(): string;
+                        base(arg: { worked_on: string, task: string }): string;
+                        stuck(arg: { worked_on: string, task: string }): string;
+                        finishing_soon(arg: { worked_on: string, task: string }): string;
+                    }
+                    finished_all_tasks: {
+                        v1(): string;
+                        v2(): string;
+                        v3(): string;
+                        v4(): string;
+                        v5(): string;
+                    }
+                }
+                action: {
+                    continue(): string;
+                    suggest_task(arg: { task: string, estimated_time: number }): string;
+                    continue_no_free_tasks(): string;
+                    assign_to_yourself(arg: { task: string, estimated_time: number }): string;
+                }
+                finished(): string;
+            }
             calendar: {
                 lunch: {
                     message(arg: { food: string }): string;

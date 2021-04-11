@@ -2946,34 +2946,34 @@ function draw_overlay_screen() {
                 function teammate_message() {
                     if (current_task) {
                         const actions = [
-                            "Работал над",
-                            "Старался над",
-                            "Залипал в",
-                            "Трудился над",
-                            "Тупил над",
-                            "Врубался в",
-                            "Втыкал в"
+                            i18n.overlay.standup.teammate.worked_on.v1(),
+                            i18n.overlay.standup.teammate.worked_on.v2(),
+                            i18n.overlay.standup.teammate.worked_on.v3(),
+                            i18n.overlay.standup.teammate.worked_on.v4(),
+                            i18n.overlay.standup.teammate.worked_on.v5(),
+                            i18n.overlay.standup.teammate.worked_on.v6(),
+                            i18n.overlay.standup.teammate.worked_on.v7()
                         ];
 
                         // Biased, but who cares
                         const action = actions[random_verb_divisible % actions.length];
 
                         if (current_task.developer_stuck_hours > 0) {
-                            return `${action} ${current_task.name}, немного застрял, пытаюсь разобраться`;
+                            return i18n.overlay.standup.teammate.worked_on.stuck({ worked_on: action, task: current_task.name });
                         } else {
                             if (current_task.remaining_work_hours < 3) {
-                                return `${action} ${current_task.name}, надеюсь, сегодня закончу`;
+                                return i18n.overlay.standup.teammate.worked_on.finishing_soon({ worked_on: action, task: current_task.name });
                             } else {
-                                return `${action} ${current_task.name}`;
+                                return i18n.overlay.standup.teammate.worked_on.base({ worked_on: action, task: current_task.name });
                             }
                         }
                     } else {
                         const strings = [
-                            "Закончил все свои задачи, жду следующей",
-                            "Задачки кончились, что взять следующим?",
-                            "Предыдущие задачки уехали, готов взять еще",
-                            "Прошлая задачка готова, какую брать дальше?",
-                            "Доделал всё, над чем работал, буду брать новую задачку"
+                            i18n.overlay.standup.teammate.finished_all_tasks.v1(),
+                            i18n.overlay.standup.teammate.finished_all_tasks.v2(),
+                            i18n.overlay.standup.teammate.finished_all_tasks.v3(),
+                            i18n.overlay.standup.teammate.finished_all_tasks.v4(),
+                            i18n.overlay.standup.teammate.finished_all_tasks.v5()
                         ];
 
                         // Biased, but who cares
@@ -2984,13 +2984,13 @@ function draw_overlay_screen() {
                 menu.message(teammate_message());
 
                 if (current_task) {
-                    if (menu.button(`Продолжить`)) {
+                    if (menu.button(i18n.overlay.standup.action.continue())) {
                         continue_to_next_teammate();
                     }
                 } else {
                     const tasks = free_tasks().slice(0, 5);
                     for (const task of tasks) {
-                        if (menu.button(`Предложить взять ${task.full_name}, оценка: ${task.estimated_time}`)) {
+                        if (menu.button(i18n.overlay.standup.action.suggest_task({ task: task.full_name, estimated_time: task.estimated_time }))) {
                             assign_task(task, {
                                 you: false,
                                 teammate: teammate
@@ -3001,7 +3001,7 @@ function draw_overlay_screen() {
                     }
 
                     if (tasks.length == 0) {
-                        if (menu.button("Нет свободных задач, продолжить")) {
+                        if (menu.button(i18n.overlay.standup.action.continue_no_free_tasks())) {
                             continue_to_next_teammate();
                         }
                     }
@@ -3009,32 +3009,32 @@ function draw_overlay_screen() {
             } else {
                 const current_task = find_your_first_current_task_in_dev();
 
-                draw_standup_avatar(images.default_avatar, "Вы", "TeamLead");
+                draw_standup_avatar(images.default_avatar, i18n.overlay.standup.you.name(), "TeamLead");
 
                 function your_message() {
                     if (current_task) {
-                        return `Пока что работаю над ${current_task.name}`;
+                        return i18n.overlay.standup.you.working_on({ task: current_task.name });
                     } else {
-                        return "Беру следующую задачу в работу";
+                        return i18n.overlay.standup.you.will_take_next_task();
                     }
                 }
 
                 function finish_standup() {
                     skip_hours(1);
-                    message_overlay(`Стендап закончен, рабочий день начался!`);
+                    message_overlay(i18n.overlay.standup.finished());
                 }
 
                 menu.message(your_message());
 
                 if (current_task) {
-                    if (menu.button("Продолжить")) {
+                    if (menu.button(i18n.overlay.standup.action.continue())) {
                         finish_standup();
                     }
                 } else {
                     const tasks = free_tasks().slice(0, 5);
 
                     for (const task of tasks) {
-                        if (menu.button(`Взять на себя ${task.full_name}, оценка: ${task.estimated_time}`)) {
+                        if (menu.button(i18n.overlay.standup.action.assign_to_yourself({ task: task.full_name, estimated_time: task.estimated_time }))) {
                             assign_task(task, { you: true });
 
                             finish_standup();
@@ -3042,7 +3042,7 @@ function draw_overlay_screen() {
                     }
 
                     if (tasks.length == 0) {
-                        if (menu.button("Нет свободных задач, продолжить")) {
+                        if (menu.button(i18n.overlay.standup.action.continue_no_free_tasks())) {
                             finish_standup();
                         }
                     }
