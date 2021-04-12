@@ -2420,7 +2420,7 @@ function draw_overlay_screen() {
         const text_days_until = i18n.deadline_stats.days_until({ days: days_until });
 
         if (show_total_tasks) {
-            const text_tasks_remaining = i18n.deadline_stats.tasks_remaining({ tasks: not_done, total: total });
+            const text_tasks_remaining = i18n.deadline_stats.tasks_remaining({ tasks: not_done, total: total.toString() });
             return `${text_days_until}\n${text_tasks_remaining}`;
         } else {
             const text_tasks_remaining = i18n.deadline_stats.backlog({ tasks: not_done });
@@ -2741,7 +2741,7 @@ function draw_overlay_screen() {
             }
 
             if (entry.type == Inbox_Entry_Type.production_bug) {
-                menu.message(i18n.overlay.inbox.production_bug({ num_bugs: entry.task.bugs }));
+                menu.message(i18n.overlay.inbox.production_bug({ num_bugs: entry.task.bugs.toString() }));
 
                 if (menu.button(i18n.overlay.inbox.action.fix_bugs())) {
                     increase_burnout_if_working_past_work_time();
@@ -2990,7 +2990,7 @@ function draw_overlay_screen() {
                 } else {
                     const tasks = free_tasks().slice(0, 5);
                     for (const task of tasks) {
-                        if (menu.button(i18n.overlay.standup.action.suggest_task({ task: task.full_name, estimated_time: task.estimated_time }))) {
+                        if (menu.button(i18n.overlay.standup.action.suggest_task({ task: task.full_name, estimated_time: task.estimated_time.toString() }))) {
                             assign_task(task, {
                                 you: false,
                                 teammate: teammate
@@ -3034,7 +3034,7 @@ function draw_overlay_screen() {
                     const tasks = free_tasks().slice(0, 5);
 
                     for (const task of tasks) {
-                        if (menu.button(i18n.overlay.standup.action.assign_to_yourself({ task: task.full_name, estimated_time: task.estimated_time }))) {
+                        if (menu.button(i18n.overlay.standup.action.assign_to_yourself({ task: task.full_name, estimated_time: task.estimated_time.toString() }))) {
                             assign_task(task, { you: true });
 
                             finish_standup();
@@ -3620,7 +3620,7 @@ function do_one_frame() {
     label(i18n.status.label.health({ status: health_label(game.player.health) }));
     label(i18n.status.label.burnout({ status: burnout_label(game.player.burnout) }));
     label(i18n.status.label.company({ status: company_status_label(game.player.company_status) }));
-    label(i18n.status.label.performance({ value: game.player.productivity }));
+    label(i18n.status.label.performance({ value: game.player.productivity.toString(10) }));
     ctx.shadowBlur = 0;
 
     push_size(50);

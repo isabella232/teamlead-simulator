@@ -73,9 +73,9 @@ declare module "ru.properties" {
                 }
                 action: {
                     continue(): string;
-                    suggest_task(arg: { task: string, estimated_time: number }): string;
+                    suggest_task(arg: { task: string, estimated_time: string }): string;
                     continue_no_free_tasks(): string;
-                    assign_to_yourself(arg: { task: string, estimated_time: number }): string;
+                    assign_to_yourself(arg: { task: string, estimated_time: string }): string;
                 }
                 finished(): string;
             }
@@ -155,7 +155,7 @@ declare module "ru.properties" {
             inbox: {
                 review_info(): string;
                 returned_to_dev(): string;
-                production_bug(arg: { num_bugs: number }): string;
+                production_bug(arg: { num_bugs: string }): string;
                 production_bug_fixed(): string;
                 action: {
                     review(): string;
@@ -247,7 +247,7 @@ declare module "ru.properties" {
         }
         deadline_stats: {
             days_until(arg: { days: number }): string;
-            tasks_remaining(arg: { tasks: number, total: number }): string;
+            tasks_remaining(arg: { tasks: number, total: string }): string;
             backlog(arg: { tasks: number }): string;
         }
         status: {
@@ -279,7 +279,7 @@ declare module "ru.properties" {
                 health(arg: { status: string }): string;
                 burnout(arg: { status: string }): string;
                 company(arg: { status: string }): string;
-                performance(arg: { value: number }): string;
+                performance(arg: { value: string }): string;
             }
         }
         chat: {
