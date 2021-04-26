@@ -725,10 +725,6 @@ function receive_message_from(teammate: Teammate, text: string, skip_greeting = 
     })
 }
 
-function base64_image(base64: string) {
-    return image_from_url(`data:image/png;base64,${base64}`)
-}
-
 const images = {
     logo_pear: image_from_url(embed_base64("images/pear.png")),
     icon_app_code_junkie: image_from_url(embed_base64("images/code_junkie.png")),
@@ -1097,6 +1093,73 @@ function mark_current_chat_as_read(app: By_Type<App, App_Type.limp>) {
     if (app.current_chat) {
         app.current_chat.messages_read = app.current_chat.messages.length;
     }
+}
+
+function draw_status_line(label: string, value_text: string, value_relative: number) {
+    const label_color = "#181F38";
+    const value_color_high = "#08CF65";
+    const value_color_low = "#CF0808";
+    const padding_h = 20;
+    const padding_v = 8;
+    const spacing = 8;
+    const font_h = 16;
+
+    function hex_to_rgb(hex: string) {
+        const value = parseInt(hex.substr(1), 16);
+        const r = (value >> 16) & 255;
+        const g = (value >> 8) & 255;
+        const b = value & 255;
+        return [r, g, b];
+    }
+
+    function lerp(a: number, b: number, x: number) {
+        return (b - a) * x + a;
+    }
+
+    const color_from = hex_to_rgb(value_color_low);
+    const color_to = hex_to_rgb(value_color_high);
+    const color_result = [
+        lerp(color_from[0], color_to[0], value_relative),
+        lerp(color_from[1], color_to[1], value_relative),
+        lerp(color_from[2], color_to[2], value_relative)
+    ];
+
+    const color_string = `rgb(${color_result[0]}, ${color_result[1]}, ${color_result[2]})`;
+
+    const ctx = current_context();
+
+    push_font(font_h);
+    const label_w = ctx.measureText(label).width;
+    pop_font();
+
+    push_font(font_h, "bold");
+    const value_w = ctx.measureText(value_text).width;
+    pop_font();
+
+    const block_w = padding_h + label_w + spacing + value_w + padding_h;
+    const block_h = padding_v + font_h + padding_v;
+
+    const xy = layout_cursor();
+
+    const rect = path_rounded_rect(xy.x, xy.y, block_w, block_h, 32);
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "white";
+    ctx.fill(rect);
+
+    const middle_y = xy.y + padding_v + font_h / 2;
+
+    push_font(font_h);
+    ctx.fillStyle = label_color;
+    ctx.fillText(label, xy.x + padding_h, middle_y);
+    pop_font();
+
+    push_font(font_h, "bold");
+    ctx.fillStyle = color_string;
+    ctx.fillText(value_text, xy.x + padding_h + label_w + spacing, middle_y);
+    pop_font();
+
+    push_size(block_h + 8);
 }
 
 function draw_messenger(app: By_Type<App, App_Type.limp>, width: number, height: number) {
@@ -1945,11 +2008,8 @@ function draw_top_bar(width: number) {
     const color_bg = "rgba(210,210,210,0.4)";
     const height = 22;
 
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = "black";
     ctx.fillStyle = color_bg;
     ctx.fillRect(0, 0, width, height);
-    ctx.shadowBlur = 0;
 
     const padding_side = 20;
 
@@ -2063,12 +2123,9 @@ function draw_dock(width: number, height: number) {
     gradient.addColorStop(0, color_top);
     gradient.addColorStop(1, color_bottom);
 
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = "black";
     ctx.fillStyle = gradient;
     const rect = path_rounded_rect(0, 0, width, height, 8);
     ctx.fill(rect);
-    ctx.shadowBlur = 0;
 
     let app_index = 0;
 
@@ -2095,12 +2152,7 @@ function draw_dock(width: number, height: number) {
             const bubble_x = x + w;
             const bubble_y = 16 - adjust / 2;
 
-            ctx.shadowColor = "#333";
-            ctx.shadowBlur = 4;
-
             fill_circle(notifications_color, bubble_x, bubble_y, r);
-
-            ctx.shadowBlur = 0;
 
             const bubble_text = notifications.toString(10);
 
@@ -3617,10 +3669,10 @@ function do_one_frame() {
     ctx.fillStyle = "#fff"
     ctx.shadowBlur = 3;
     ctx.shadowColor = "#000";
-    label(i18n.status.label.health({ status: health_label(game.player.health) }));
-    label(i18n.status.label.burnout({ status: burnout_label(game.player.burnout) }));
-    label(i18n.status.label.company({ status: company_status_label(game.player.company_status) }));
-    label(i18n.status.label.performance({ value: game.player.productivity.toString(10) }));
+    draw_status_line(i18n.status.label.health(), health_label(game.player.health), game.player.health / 100);
+    draw_status_line(i18n.status.label.burnout(), burnout_label(game.player.burnout), 1 - (game.player.burnout / 100));
+    draw_status_line(i18n.status.label.company(), company_status_label(game.player.company_status), game.player.company_status / 100);
+    draw_status_line(i18n.status.label.performance(), `${game.player.productivity.toString(10)}%`, 1);
     ctx.shadowBlur = 0;
 
     push_size(50);

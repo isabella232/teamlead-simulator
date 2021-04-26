@@ -276,10 +276,10 @@ declare module "ru.properties" {
                 zero(): string;
             }
             label: {
-                health(arg: { status: string }): string;
-                burnout(arg: { status: string }): string;
-                company(arg: { status: string }): string;
-                performance(arg: { value: string }): string;
+                health(): string;
+                burnout(): string;
+                company(): string;
+                performance(): string;
             }
         }
         chat: {
